@@ -5,7 +5,7 @@
 * **Front End:** Blazor WebAssembly (.NET 7)
 * **ORM:** Entity Framework Core (Code first)
 * **Database:** MS SQL Server
-* **Component Library:** MudBlazor
+* **Component Library:** [MudBlazor](https://mudblazor.com/)
 
 ## Database Schema
 ![image](https://user-images.githubusercontent.com/24509506/217914601-5674d555-c0af-4207-ac09-172fe834e9fe.png)
