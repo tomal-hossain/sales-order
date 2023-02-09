@@ -1,0 +1,27 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="@_themeSettings" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Dense="true">
+        <MudText Typo="Typo.h5" Class="ml-3">Sales Order</MudText>
+    </MudAppBar>
+    <MudMainContent>
+        <div class="container px-4 py-4">
+            @Body
+        </div>
+    </MudMainContent>
+</MudLayout>
+
+@code{
+    private MudTheme _themeSettings = new()
+    {
+        Palette = new Palette()
+        {
+            Primary = "#337ab7",
+            AppbarBackground = "#337ab7",
+        }
+    };
+}

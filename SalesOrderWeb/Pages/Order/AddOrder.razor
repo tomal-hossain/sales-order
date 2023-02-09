@@ -1,0 +1,169 @@
+﻿@page "/add-order"
+@inject IHttpService _httpService
+@inject ISnackbar _snakbar
+@inject NavigationManager _navigator
+
+<EditForm Model="@Model" OnValidSubmit="OnSubmit">
+    <MudCard Elevation="3">
+        <MudCardContent>
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField Label="Order Name" @bind-Value="Model.Name" For="@(() => Model.Name)" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" Label="State" @bind-Value="@Model.State" For="@(() => Model.State)" Variant="Variant.Outlined">
+                        @foreach (var state in States)
+                        {
+                            <MudSelectItem T="string" Value="@state">@state</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+            @foreach (var window in Model.Windows)
+            {
+                <MudCard Elevation="3" Class="mt-2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Window @(Model.Windows.IndexOf(window) + 1)</MudText>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default" OnClick="@(() => RemoveWindow(window))" />
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudGrid>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField Label="Window Name" @bind-Value="window.Name" For="@(() => window.Name)" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudNumericField Label="Quantity" @bind-Value="window.Quantity" For="@(() => window.Quantity)" Variant="Variant.Outlined" />
+                                </MudItem>
+                            </MudGrid>
+                            @foreach (var subElement in window.SubElements)
+                        {
+                            <MudGrid>
+                                <MudItem xs="12" sm="5">
+                                    <MudSelect T="ElementType" Label="Type" @bind-Value="@subElement.Type" Variant="Variant.Outlined">
+                                        @foreach (var elementType in Enum.GetValues(typeof(ElementType)))
+                                        {
+                                            <MudSelectItem T="ElementType" Value="(ElementType) elementType">@elementType</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="5" sm="3">
+                                    <MudNumericField Label="Width" @bind-Value="subElement.Width" For="@(() => subElement.Width)" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="5" sm="3">
+                                    <MudNumericField Label="Height" @bind-Value="subElement.Height" For="@(() => subElement.Height)" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="2" sm="1">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default" OnClick="@(() => RemoveSubElement(window, subElement))" />
+                                </MudItem>
+                            </MudGrid>
+                        }
+                        <div class="mt-2 d-flex justify-end">
+                            <MudFab StartIcon="@Icons.Material.Filled.Add" Label="Add Sub Element" Size="Size.Small" Color="Color.Primary" OnClick="@(() => AddSubElement(window))" />
+                        </div>
+
+                    </MudCardContent>
+                </MudCard>
+            }
+            <MudFab Class="mt-2" StartIcon="@Icons.Material.Filled.Add" Label="Add Window" Size="Size.Small" Color="Color.Primary" OnClick="@AddWindow" />
+        </MudCardContent>
+        <MudCardActions Class="d-flex justify-end">
+            <MudButton ButtonType="ButtonType.Button" Color="Color.Error" OnClick="@(() => _navigator.NavigateTo("/"))">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Disabled="@IsLoading" Color="Color.Primary">Save</MudButton>
+        </MudCardActions>
+    </MudCard>
+</EditForm>
+
+@code {
+    private OrderViewModel Model = new()
+    {
+        Windows = new List<WindowViewModel>()
+    };
+
+    private bool IsLoading = false;
+
+    private string[] States =
+    {
+        "Michigan",
+        "Minnesota",
+        "Mississippi",
+        "Missouri",
+        "Montana"
+    };
+
+    private WindowViewModel NewWindow() =>
+        new WindowViewModel()
+        {
+            SubElements = new List<SubElementViewModel>()
+            {
+                NewSubElement()
+            }
+        };
+
+    private SubElementViewModel NewSubElement() =>
+        new SubElementViewModel
+        {
+            Type = ElementType.Window,
+            Width = 1,
+            Height = 1
+        };
+
+    protected override void OnInitialized()
+    {
+        Model.Windows.Add(NewWindow());
+        base.OnInitialized();
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            var response = await _httpService.Post<ResponseModel>("/api/order/add", Model);
+            if (response.IsSuccess)
+            {
+                _snakbar.Add("Successfully Added!", Severity.Success);
+                _navigator.NavigateTo("/");
+            }
+            else
+            {
+                _snakbar.Add(response.Result.ToString(), Severity.Error);
+            }
+        }
+        catch(Exception ex)
+        {
+            _snakbar.Add("Something went wrong, please try again!", Severity.Error);
+        }
+    }
+
+    private void AddWindow()
+    {
+        Model.Windows.Add(NewWindow());
+    }
+
+    private void AddSubElement(WindowViewModel window)
+    {
+        window.SubElements.Add(NewSubElement());
+    }
+
+    private void RemoveWindow(WindowViewModel window)
+    {
+        Model.Windows.Remove(window);
+        if (!Model.Windows.Any())
+        {
+            AddWindow();
+        }
+    }
+
+    private void RemoveSubElement(WindowViewModel window, SubElementViewModel element)
+    {
+        window.SubElements.Remove(element);
+        if (!window.SubElements.Any())
+        {
+            AddSubElement(window);
+        }
+    }
+}

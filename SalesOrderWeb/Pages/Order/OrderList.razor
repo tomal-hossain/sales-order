@@ -1,0 +1,125 @@
+﻿@page "/"
+
+@inject IHttpService _httpService
+@inject ISnackbar _snakbar
+@inject NavigationManager _navigator
+@inject IDialogService _dialogService
+
+<MudTable Items="@Orders">
+	<ToolBarContent>
+		<MudText Typo="Typo.h4">Orders </MudText>
+		<div class="ml-2">
+			<MudFab EndIcon="@Icons.Material.Filled.Add" Label="Create New" Size="Size.Small" Color="Color.Primary" OnClick="@(() => _navigator.NavigateTo("/add-order"))" />
+		</div>
+	</ToolBarContent>
+	<ColGroup>
+		<col class="w-10" />
+		<col class="w-50" />
+		<col class="w-30" />
+		<col class="w-10" />
+	</ColGroup>
+	<HeaderContent>
+		<MudTh></MudTh>
+		<MudTh><MudTableSortLabel SortBy="new Func<OrderViewModel, object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+		<MudTh><MudTableSortLabel SortBy="new Func<OrderViewModel, object>(x => x.State)">State</MudTableSortLabel></MudTh>
+		<MudTh Style="text-align: right"></MudTh>
+	</HeaderContent>
+	<RowTemplate>
+		<MudTd><MudIconButton Variant="Variant.Outlined" Icon="@(context.ShowDetails == true ? @Icons.Material.Filled.KeyboardArrowDown : @Icons.Material.Filled.KeyboardArrowRight)" Size="Size.Small" OnClick="@(() => context.ShowDetails = !context.ShowDetails)" /></MudTd>
+		<MudTd DataLabel="Name">@context.Name</MudTd>
+		<MudTd DataLabel="State">@context.State</MudTd>
+		<MudTd Style="text-align: right"><MudIconButton Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Delete" OnClick="@(() => OnDeleteClick(context))" /></MudTd>
+	</RowTemplate>
+	<ChildRowContent>
+		@if (context.ShowDetails)
+		{
+			foreach(var window in context.Windows)
+			{
+				<MudTr>
+					<td></td>
+					<td colspan="3">
+						<MudCard Elevation="0">
+							<MudCardHeader>
+								<CardHeaderContent>
+									<MudText Typo="Typo.body1"> <strong>Window Name: @window.Name, Quantity: @window.Quantity, Sub Elements: @window.SubElements.Count()</strong></MudText>
+								</CardHeaderContent>
+							</MudCardHeader>
+							<MudCardContent Class="pa-0">
+								<MudTable Items="window.SubElements" Context="subElementContext" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+									<HeaderContent>
+										<MudTh></MudTh>
+										<MudTh>Type</MudTh>
+										<MudTh>Width</MudTh>
+										<MudTh>Height</MudTh>
+									</HeaderContent>
+									<RowTemplate>
+										<MudTh></MudTh>
+										<MudTd DataLabel="Type">@subElementContext.Type</MudTd>
+										<MudTd DataLabel="Width2">@subElementContext.Width</MudTd>
+										<MudTd DataLabel="Height">@subElementContext.Height</MudTd>
+									</RowTemplate>
+								</MudTable>
+							</MudCardContent>
+						</MudCard>
+					</td>
+				</MudTr>
+			}
+		}
+	</ChildRowContent>
+	<PagerContent>
+		<MudTablePager />
+	</PagerContent>
+</MudTable>
+
+@code{
+	public IList<OrderViewModel> Orders { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			Orders = await _httpService.Get<IList<OrderViewModel>>("/api/order/all");
+		}
+		catch(Exception ex)
+		{
+			_snakbar.Add(ex.Message, Severity.Error);
+		}
+
+		await base.OnInitializedAsync();
+	}
+
+	private async Task OnDeleteClick(OrderViewModel order)
+	{
+		var dialog = _dialogService.Show<DeleteConfirmation>("Delete Confirmation",
+			new DialogParameters
+			{
+				["Name"] = order.Name
+			},
+			new DialogOptions
+			{
+				DisableBackdropClick = true
+			});
+
+		var result = await dialog.Result;
+		if (!result.Cancelled)
+		{
+			try
+			{
+				var response = await _httpService.Delete<ResponseModel>($"/api/order/remove/{order.Id}");
+				if (response.IsSuccess)
+				{
+					_snakbar.Add("Successfully Deleted!", Severity.Success);
+					Orders.Remove(order);
+				}
+				else
+				{
+					_snakbar.Add(response.Result.ToString(), Severity.Error);
+				}
+			}
+			catch (Exception ex)
+			{
+				_snakbar.Add("Something went wrong, please try again!", Severity.Error);
+			}
+		}
+	}
+}

@@ -1,0 +1,23 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body2">Are you sure you want to delete @Name ?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="Submit">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public MudDialogInstance DialogRef { get; set; }
+
+    [Parameter]
+    public string Name { get; set; }
+
+    private void Submit() =>
+        DialogRef.Close(DialogResult.Ok(true));
+
+    private void Cancel() =>
+        DialogRef.Cancel();
+}

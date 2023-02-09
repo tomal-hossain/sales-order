@@ -1,0 +1,11 @@
+API.Service/bin/
+API.Domain/bin/
+API.Domain/obj/
+API.Service/obj/
+SalesOrderAPI/bin/
+SalesOrderAPI/obj/
+SalesOrderWeb/bin/
+SalesOrderWeb/obj/
+Shared/obj/
+Shared/bin/
+.vs/
