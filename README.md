@@ -1,4 +1,4 @@
-# sales-order
+# Sales Order Management App
 
 ## Technology used
 * **Back End:** ASP.NET Core Web API (.NET 7)
